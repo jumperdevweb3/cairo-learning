@@ -1,0 +1,1 @@
+Deployed smart contract - 0x050adfa831db7d2759a1f4115491230ab1c7fd99ee53902d7a2d4567b91ed534
