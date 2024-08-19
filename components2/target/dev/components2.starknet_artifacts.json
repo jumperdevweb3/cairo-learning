@@ -1,0 +1,1 @@
+{"version":1,"contracts":[{"id":"h9tt1p9lp3pla","package_name":"components2","contract_name":"DepositsAndWithdrawals","module_path":"components2::DepositsAndWithdrawals","artifacts":{"sierra":"components2_DepositsAndWithdrawals.contract_class.json","casm":null}}]}

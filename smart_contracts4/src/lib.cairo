@@ -10,27 +10,39 @@ trait IERC20<TContractState> {
 
 #[starknet::contract]
 mod DepositsAndWithdrawals {
+    use openzeppelin::access::ownable::interface::IOwnable;
+    use openzeppelin::access::ownable::OwnableComponent;
     use core::array::ArrayTrait;
     use core::traits::TryInto;
     use starknet::{get_caller_address, ContractAddress, get_contract_address};
     use starknet::syscalls::call_contract_syscall;
     use super::IERC20;
 
+    component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
+    impl OwnableInternalImpl = OwnableComponent::InternalImpl<ContractState>;
+
     #[storage]
     struct Storage {
-        owner: ContractAddress,
         balance: u256,
         stark_token: ContractAddress,
         tax_recipient: ContractAddress,
         deposits: LegacyMap::<ContractAddress, u256>,
-        test: u256
+        #[substorage(v0)]
+        ownable: OwnableComponent::Storage,
+    }
+
+    #[event]
+    #[derive(Drop, starknet::Event)]
+    enum Event {
+        #[flat]
+        OwnableEvent: OwnableComponent::Event,
     }
 
     #[constructor]
     fn constructor(
         ref self: ContractState, owner: ContractAddress, tax_recipient: ContractAddress
     ) {
-        self.owner.write(owner);
+        self.ownable.initializer(owner);
         self.balance.write(0);
         self.tax_recipient.write(tax_recipient);
         self
@@ -71,8 +83,7 @@ mod DepositsAndWithdrawals {
         fn withdraw(ref self: ContractState, amount: u256) {
             let scaled_amount = amount * u256 { low: 1000000000000000000, high: 0 };
             let caller = get_caller_address();
-            let owner = self.owner.read();
-            assert(caller == owner, 'Only owner');
+            self.ownable.assert_only_owner();
 
             let current_balance_scaled = self.balance.read()
                 * u256 { low: 1000000000000000000, high: 0 };
@@ -97,7 +108,7 @@ mod DepositsAndWithdrawals {
         }
 
         fn get_owner_address(self: @ContractState) -> ContractAddress {
-            self.owner.read()
+            self.ownable.owner()
         }
 
         fn get_balance(self: @ContractState) -> u256 {
